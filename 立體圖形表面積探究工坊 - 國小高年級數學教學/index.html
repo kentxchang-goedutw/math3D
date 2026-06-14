@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>立體圖形表面積探究工坊 - 國小高年級數學教學</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls for Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* 避免 3D Canvas 被選取 */
+        canvas {
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-x-hidden">
+
+    <header class="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid fa-cubes text-2xl text-amber-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-wider">立體圖形表面積探究工坊</h1>
+                    <p class="text-xs text-blue-100 hidden sm:block">中小學數學互動探索教材 ── 展開與表面積計算</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+                <a href="https://kentxchang.blogspot.tw" target="_blank" class="bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm border border-amber-500/30 transition-all flex items-center gap-1 shadow-sm" title="造訪 阿剛老師的部落格">
+                    <i class="fa-solid fa-user-graduate"></i> Made by 阿剛老師
+                </a>
+                <span class="bg-white/10 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm">
+                    <i class="fa-solid fa-chalkboard-user mr-1 text-amber-300"></i> 教學演示專用
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側：控制面板與公式說明 (佔 5 欄) -->
+        <section class="lg:col-span-5 flex flex-col space-y-6">
+            
+            <!-- 1. 選擇圖形 -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                <h2 class="text-lg font-bold mb-4 flex items-center text-slate-700">
+                    <span class="w-2 h-6 bg-indigo-600 rounded mr-2"></span>
+                    步驟 1：選擇立體圖形
+                </h2>
+                <div class="grid grid-cols-5 gap-2" id="shapeSelector">
+                    <button onclick="selectShape('cube')" id="btn-cube" class="shape-btn flex flex-col items-center justify-center p-3 rounded-xl border-2 border-indigo-600 bg-indigo-50/50 text-indigo-700 transition-all">
+                        <i class="fa-solid fa-cube text-xl mb-1"></i>
+                        <span class="text-xs font-medium">正方體</span>
+                    </button>
+                    <button onclick="selectShape('prism')" id="btn-prism" class="shape-btn flex flex-col items-center justify-center p-3 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-slate-50 text-slate-600 transition-all">
+                        <i class="fa-solid fa-cubes text-xl mb-1"></i>
+                        <span class="text-xs font-medium">長方體</span>
+                    </button>
+                    <button onclick="selectShape('triPrism')" id="btn-triPrism" class="shape-btn flex flex-col items-center justify-center p-3 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-slate-50 text-slate-600 transition-all">
+                        <i class="fa-solid fa-shapes text-xl mb-1"></i>
+                        <span class="text-xs font-medium">三角柱</span>
+                    </button>
+                    <button onclick="selectShape('cylinder')" id="btn-cylinder" class="shape-btn flex flex-col items-center justify-center p-3 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-slate-50 text-slate-600 transition-all">
+                        <i class="fa-solid fa-database text-xl mb-1"></i>
+                        <span class="text-xs font-medium">圓柱</span>
+                    </button>
+                    <button onclick="selectShape('pyramid')" id="btn-pyramid" class="shape-btn flex flex-col items-center justify-center p-3 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-slate-50 text-slate-600 transition-all">
+                        <i class="fa-solid fa-triangle-exclamation text-xl mb-1"></i>
+                        <span class="text-xs font-medium">角錐</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 圖形參數調整 -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                <h2 class="text-lg font-bold mb-4 flex items-center text-slate-700">
+                    <span class="w-2 h-6 bg-indigo-600 rounded mr-2"></span>
+                    步驟 2：調整圖形尺寸
+                </h2>
+                <div class="space-y-4" id="controlsContainer">
+                    <!-- 動態插入滑桿 -->
+                </div>
+            </div>
+
+            <!-- 3. 展開圖控制 (核心教學功能) -->
+            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 opacity-10">
+                    <i class="fa-solid fa-cubes text-9xl"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold flex items-center">
+                            <i class="fa-solid fa-scissors text-amber-400 mr-2"></i>
+                            步驟 3：展開圖折疊操作
+                        </h2>
+                        <span id="unfoldProgressText" class="text-xs bg-white/20 px-2 py-0.5 rounded-full font-mono">100% (立體)</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 mb-4">
+                        <button id="btnPlay" onclick="toggleAutoUnfold()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold p-3 rounded-full transition-all shadow-md flex items-center justify-center w-12 h-12">
+                            <i class="fa-solid fa-play text-lg" id="playIcon"></i>
+                        </button>
+                        <div class="flex-1">
+                            <input type="range" id="unfoldSlider" min="0" max="100" value="100" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-400" oninput="onUnfoldSliderChange(this.value)">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>0% (完全展開)</span>
+                                <span>50%</span>
+                                <span>100% (立體)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-center text-xs">
+                        <button onclick="setUnfoldProgress(0)" class="bg-white/10 hover:bg-white/20 py-2 rounded-lg border border-white/10 transition-all font-medium">一鍵扁平展開</button>
+                        <button onclick="setUnfoldProgress(100)" class="bg-white/10 hover:bg-white/20 py-2 rounded-lg border border-white/10 transition-all font-medium">還原立體形狀</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex-1 flex flex-col">
+                <h2 class="text-lg font-bold mb-3 flex items-center text-slate-700">
+                    <span class="w-2 h-6 bg-indigo-600 rounded mr-2"></span>
+                    立體圖形表面積計算式
+                </h2>
+                
+                <div class="space-y-4 flex-1 flex flex-col justify-between">
+                    <!-- 顏色圖例 -->
+                    <div class="flex space-x-4 text-xs">
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 rounded bg-blue-500 border border-blue-600 mr-1.5 inline-block"></span>
+                            <span class="font-medium text-slate-600">底面積 (藍色)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 rounded bg-amber-500 border border-amber-600 mr-1.5 inline-block"></span>
+                            <span class="font-medium text-slate-600">側面積 (橘色)</span>
+                        </div>
+                    </div>
+
+                    <!-- 公式看板 -->
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
+                        <div class="text-center font-bold text-slate-700 text-sm md:text-base border-b border-dashed border-slate-200 pb-2" id="formulaGeneral">
+                            表面積 ＝ 底面積 × 2 ＋ 側面積
+                        </div>
+                        <div class="space-y-1.5 text-xs md:text-sm text-slate-600 font-mono" id="formulaDetails">
+                            <!-- 動態插入公式細節 -->
+                        </div>
+                    </div>
+
+                    <!-- 即時計算步驟 -->
+                    <div class="p-4 bg-amber-50/50 rounded-xl border border-amber-100 space-y-2">
+                        <div class="text-xs font-bold text-amber-800 tracking-wider">實時算式解析：</div>
+                        <div class="space-y-1 text-xs md:text-sm font-semibold font-mono text-slate-700" id="calculationSteps">
+                            <!-- 動態插入實時數值算式 -->
+                        </div>
+                        <div class="text-right text-base md:text-lg font-extrabold text-indigo-700 mt-2 border-t border-amber-200/50 pt-2" id="totalSurfaceArea">
+                            表面積 ＝ 150.0 cm²
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 右側：3D 互動視窗與練習題區 (佔 7 欄) -->
+        <section class="lg:col-span-7 flex flex-col space-y-6">
+            
+            <!-- 1. 3D 畫布容器 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col relative h-[450px] md:h-[500px]">
+                
+                <!-- 畫布頂部控制工具 -->
+                <div class="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
+                    <div class="flex space-x-2 pointer-events-auto">
+                        <button onclick="resetCamera()" class="bg-white/95 backdrop-blur shadow hover:bg-slate-50 text-slate-700 p-2.5 rounded-xl text-xs font-semibold flex items-center border border-slate-200 transition-all" title="重設視角">
+                            <i class="fa-solid fa-arrows-rotate mr-1"></i> 重設視角
+                        </button>
+                        <button onclick="setCameraView('top')" class="bg-white/95 backdrop-blur shadow hover:bg-slate-50 text-slate-700 p-2.5 rounded-xl text-xs font-semibold flex items-center border border-slate-200 transition-all" title="俯視圖">
+                            <i class="fa-solid fa-eye mr-1"></i> 俯視 (2D展開)
+                        </button>
+                    </div>
+                    <div class="flex space-x-2 pointer-events-auto">
+                        <button onclick="toggleGrid()" id="btnGrid" class="bg-white/95 backdrop-blur shadow hover:bg-indigo-50 text-indigo-700 p-2.5 rounded-xl text-xs font-semibold flex items-center border-2 border-indigo-200 transition-all">
+                            <i class="fa-solid fa-border-all mr-1"></i> 網格背景
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3D 繪圖區 -->
+                <div id="threeContainer" class="w-full flex-1 bg-slate-100 relative">
+                    <!-- 3D Canvas 將插入於此 -->
+                    <div id="canvasOverlayLabels" class="absolute inset-0 pointer-events-none">
+                        <!-- 動態定位的 HTML 尺寸標籤 -->
+                    </div>
+                </div>
+
+                <!-- 畫布底部提示 -->
+                <div class="bg-slate-50 px-4 py-2 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center">
+                    <span><i class="fa-solid fa-circle-info mr-1 text-slate-400"></i> 滑鼠左鍵拖曳旋轉 / 右鍵平移 / 滾輪縮放 3D 畫面</span>
+                    <span id="canvasStats" class="font-mono text-[10px] bg-slate-200/50 px-1.5 py-0.5 rounded">FPS: 60</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold flex items-center text-slate-700">
+                        <span class="w-2 h-6 bg-emerald-600 rounded mr-2"></span>
+                        課堂即時挑戰 (互動隨堂測驗)
+                    </h2>
+                    <button onclick="generateNewQuiz()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all">
+                        <i class="fa-solid fa-shuffle mr-1"></i> 換一題
+                    </button>
+                </div>
+
+                <div class="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100 space-y-3">
+                    <div class="text-xs font-bold text-emerald-800 tracking-wider">
+                        題目內容：
+                    </div>
+                    <p id="quizQuestionText" class="text-sm md:text-base text-slate-700 font-medium">
+                        正在載入精選挑戰題...
+                    </p>
+                    
+                    <!-- 輸入答案與反饋 -->
+                    <div class="flex flex-wrap items-center gap-3 pt-2">
+                        <div class="relative max-w-[200px]">
+                            <input type="number" id="quizAnswerInput" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold" placeholder="輸入答案">
+                            <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-bold">cm²</span>
+                        </div>
+                        <button onclick="checkQuizAnswer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm shadow transition-all">
+                            檢查答案
+                        </button>
+                        <button onclick="loadQuizToVisualizer()" id="btnLoadQuizToVis" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition-all">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 代入此題數據 3D 模擬
+                        </button>
+                    </div>
+
+                    <!-- 反饋訊息區 -->
+                    <div id="quizFeedback" class="hidden p-3 rounded-lg text-xs md:text-sm font-bold flex items-center space-x-2">
+                        <!-- 反饋文字 -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col items-center gap-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center w-full gap-3 border-b border-slate-800 pb-4">
+                <p class="text-slate-500">© 2026 國小高年級數學幾何輔助教學工具 - 展開與表面積</p>
+                <p class="flex items-center gap-2">
+                    <span>開發設計：</span>
+                    <a href="https://kentxchang.blogspot.tw" target="_blank" class="text-amber-400 hover:text-amber-300 font-bold underline transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-graduation-cap"></i> 阿剛老師
+                    </a> 
+                    <span class="text-slate-700">|</span> 
+                    <span class="flex items-center gap-1">
+                        Made with <i class="fa-solid fa-heart text-rose-500"></i> for Math Education
+                    </span>
+                </p>
+            </div>
+            
+            <!-- 簡單中文 CC 授權說明 -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left text-[11px] text-slate-500 w-full">
+                <div class="flex items-center gap-1 bg-slate-850 px-2.5 py-1 rounded-lg border border-slate-800 text-slate-400 font-bold shrink-0">
+                    <i class="fa-brands fa-creative-commons text-sm"></i>
+                    <i class="fa-brands fa-creative-commons-by text-sm"></i>
+                    <i class="fa-brands fa-creative-commons-nc text-sm"></i>
+                    <i class="fa-brands fa-creative-commons-sa text-sm"></i>
+                    <span class="ml-1 tracking-wider">CC BY-NC-SA 4.0</span>
+                </div>
+                <p class="leading-relaxed max-w-3xl">
+                    本教材採用 <span class="text-slate-400 font-semibold">創用 CC 姓名標示-非商業性-相同方式分享 4.0 國際授權條款</span> 釋出。
+                    歡迎中小學教師自由用於教學演示、課堂互動與教育推廣。轉載或修改發布時請註明出處並保持相同的授權方式。
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. 全域變數定義 ---
+        let scene, camera, renderer, controls;
+        let activeShape = 'cube'; // cube, prism, triPrism, cylinder, pyramid
+        let foldProgress = 1.0; // 0.0 (平坦展開) 到 1.0 (立體)
+        let isAutoFolding = false;
+        let autoFoldDirection = -0.01; // 自動展開速率與方向
+        let gridHelper;
+        let meshGroup; // 包含目前形狀的所有 3D 面
+        
+        // 圖形參數 (預設值)
+        const shapeParams = {
+            cube: { size: 4 },
+            prism: { width: 5, height: 4, depth: 3 },
+            triPrism: { width: 4, height: 5, depth: 3 }, // w: 底三角形底邊, d: 底三角形的高, h: 柱體高
+            cylinder: { radius: 2, height: 5 },
+            pyramid: { width: 4, height: 4.5 } // w: 底邊寬, h: 錐體側面三角形斜高(slant height)
+        };
+
+        // 題目庫
+        let currentQuiz = {};
+        const quizList = [
+            { shape: 'cube', size: 5, q: "有一個「正方體」，其邊長為 5 公分，請問它的表面積是多少？", a: 150 },
+            { shape: 'cube', size: 3, q: "老師拿出一個每邊 3 公分的正方體積木，請問這個積木的六個面表面積共是多少？", a: 54 },
+            { shape: 'prism', width: 6, height: 4, depth: 3, q: "一個「長方體」餅乾盒，長 6 公分、高 4 公分、寬 3 公分，請問它的表面積是多少？", a: 108 },
+            { shape: 'prism', width: 5, height: 8, depth: 2, q: "長方體紙盒的長為 5 公分，寬為 2 公分，高為 8 公分，請問要包裹此紙盒需要多少平方公分的包裝紙？", a: 132 },
+            { shape: 'triPrism', width: 6, height: 5, depth: 4, q: "有一個直角三角柱，底面三角形的底為 6 公分、高為 4 公分（斜邊為 5 公分），柱體高度為 5 公分。請問它的表面積是多少？<br><span class='text-amber-600 font-normal'>(提示：底面積 = 6×4÷2；側面積包括三個不同尺寸的矩形)</span>", a: 99 },
+            { shape: 'cylinder', radius: 3, height: 7, q: "有一個「圓柱體」筆筒，底面圓形半徑為 3 公分，柱體高為 7 公分。請計算它的表面積。<br><span class='text-amber-600 font-normal'>(圓周率以 3.14 計算。提示：底面積 = 3×3×3.14；側面積 = 2×3×3.14 × 7)</span>", a: 188.4 },
+            { shape: 'pyramid', width: 6, height: 5, q: "有一個「正四角錐」金字塔模型，底面是邊長 6 公分正方形，側面四個三角形的斜高（底邊上的高）均為 5 公分，請問其表面積是多少？", a: 96 }
+        ];
+
+        // 網頁加載完畢後啟動
+        window.onload = function() {
+            initThree();
+            selectShape('cube'); // 預設顯示正方體
+            generateNewQuiz();
+            animate();
+        };
+
+        // --- 2. 初始化 Three.js 場景 ---
+        function initThree() {
+            const container = document.getElementById('threeContainer');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // 創建場景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8fafc); // slate-50 同色
+
+            // 創建相機
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+            camera.position.set(7, 8, 10);
+
+            // 創建渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // 添加 OrbitControls 相機軌道控制器
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 + 0.1; // 限制視角不穿入地下
+
+            // 添加光源
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight1.position.set(10, 20, 15);
+            dirLight1.castShadow = true;
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0xd9e2ec, 0.3);
+            dirLight2.position.set(-10, 10, -10);
+            scene.add(dirLight2);
+
+            // 輔助網格底座
+            gridHelper = new THREE.GridHelper(20, 20, 0xcbd5e1, 0xe2e8f0);
+            gridHelper.position.y = -1.5;
+            scene.add(gridHelper);
+
+            // 初始化形狀群組
+            meshGroup = new THREE.Group();
+            scene.add(meshGroup);
+
+            // 視窗自適應縮放
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('threeContainer');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        // 重設視角
+        function resetCamera() {
+            camera.position.set(7, 8, 10);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        // 切換預設視角
+        function setCameraView(viewType) {
+            if (viewType === 'top') {
+                camera.position.set(0, 12, 0.01); // 頂俯視圖
+            } else if (viewType === 'front') {
+                camera.position.set(0, 0, 12);
+            }
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        // 開關網格背景
+        function toggleGrid() {
+            gridHelper.visible = !gridHelper.visible;
+            const btn = document.getElementById('btnGrid');
+            if (gridHelper.visible) {
+                btn.className = "bg-white/95 backdrop-blur shadow hover:bg-indigo-50 text-indigo-700 p-2.5 rounded-xl text-xs font-semibold flex items-center border-2 border-indigo-200 transition-all";
+            } else {
+                btn.className = "bg-white/95 backdrop-blur shadow hover:bg-slate-50 text-slate-600 p-2.5 rounded-xl text-xs font-semibold flex items-center border border-slate-200 transition-all";
+            }
+        }
+
+        // --- 3. 核心形狀切換與 UI 滑桿動態生成 ---
+        function selectShape(shape) {
+            activeShape = shape;
+            
+            // 更新 UI 選擇狀態
+            const buttons = document.querySelectorAll('.shape-btn');
+            buttons.forEach(btn => {
+                btn.className = "shape-btn flex flex-col items-center justify-center p-3 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-slate-50 text-slate-600 transition-all";
+            });
+            document.getElementById(`btn-${shape}`).className = "shape-btn flex flex-col items-center justify-center p-3 rounded-xl border-2 border-indigo-600 bg-indigo-50/50 text-indigo-700 transition-all";
+
+            // 動態產生對應尺寸控制滑桿
+            renderControls();
+            
+            // 重建 3D 形狀與計算式
+            rebuildShape();
+        }
+
+        function renderControls() {
+            const container = document.getElementById('controlsContainer');
+            container.innerHTML = ''; // 清空
+
+            let controlsHtml = '';
+            if (activeShape === 'cube') {
+                controlsHtml = createSliderMarkup('size', '正方體邊長', shapeParams.cube.size, 1.5, 6, 0.5, '公分');
+            } else if (activeShape === 'prism') {
+                controlsHtml += createSliderMarkup('width', '長方體 長度(寬)', shapeParams.prism.width, 2, 7, 0.5, '公分');
+                controlsHtml += createSliderMarkup('depth', '長方體 寬度(深)', shapeParams.prism.depth, 1.5, 6, 0.5, '公分');
+                controlsHtml += createSliderMarkup('height', '長方體 高度', shapeParams.prism.height, 2, 7, 0.5, '公分');
+            } else if (activeShape === 'triPrism') {
+                controlsHtml += createSliderMarkup('width', '底三角形底邊(a)', shapeParams.triPrism.width, 3, 6, 0.5, '公分');
+                controlsHtml += createSliderMarkup('depth', '底三角形的高(d)', shapeParams.triPrism.depth, 2, 5, 0.5, '公分');
+                controlsHtml += createSliderMarkup('height', '柱體高度(h)', shapeParams.triPrism.height, 2, 7, 0.5, '公分');
+            } else if (activeShape === 'cylinder') {
+                controlsHtml += createSliderMarkup('radius', '底面圓形半徑(r)', shapeParams.cylinder.radius, 1, 3.5, 0.1, '公分');
+                controlsHtml += createSliderMarkup('height', '圓柱體高度(h)', shapeParams.cylinder.height, 2.5, 7, 0.5, '公分');
+            } else if (activeShape === 'pyramid') {
+                controlsHtml += createSliderMarkup('width', '底面正方形邊長(w)', shapeParams.pyramid.width, 2.5, 6, 0.5, '公分');
+                controlsHtml += createSliderMarkup('height', '側面三角形斜高(s)', shapeParams.pyramid.height, 3, 7, 0.5, '公分');
+            }
+
+            container.innerHTML = controlsHtml;
+        }
+
+        function createSliderMarkup(id, label, value, min, max, step, unit) {
+            return `
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-bold text-slate-600">
+                        <span>${label}</span>
+                        <span class="text-indigo-600 font-mono text-sm">${value} ${unit}</span>
+                    </div>
+                    <input type="range" id="param-${id}" min="${min}" max="${max}" step="${step}" value="${value}" 
+                           class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                           oninput="updateParam('${id}', this.value)">
+                </div>
+            `;
+        }
+
+        // 更新參數
+        function updateParam(paramId, val) {
+            const parsedVal = parseFloat(val);
+            shapeParams[activeShape][paramId] = parsedVal;
+            
+            // 更新畫面上顯示的數值標記
+            renderControls();
+            
+            // 即時重建與重新繪製
+            rebuildShape();
+        }
+
+        // 控制折疊度
+        function onUnfoldSliderChange(val) {
+            foldProgress = val / 100.0;
+            document.getElementById('unfoldProgressText').innerText = `${val}% ${val == 100 ? '(立體)' : val == 0 ? '(完全展開)' : '(折疊中)'}`;
+            rebuildShape();
+        }
+
+        function setUnfoldProgress(val) {
+            document.getElementById('unfoldSlider').value = val;
+            onUnfoldSliderChange(val);
+        }
+
+        function toggleAutoUnfold() {
+            isAutoFolding = !isAutoFolding;
+            const icon = document.getElementById('playIcon');
+            const btn = document.getElementById('btnPlay');
+            if (isAutoFolding) {
+                icon.className = "fa-solid fa-pause text-lg";
+                btn.className = "bg-rose-500 hover:bg-rose-600 text-white font-bold p-3 rounded-full transition-all shadow-md flex items-center justify-center w-12 h-12";
+            } else {
+                icon.className = "fa-solid fa-play text-lg";
+                btn.className = "bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold p-3 rounded-full transition-all shadow-md flex items-center justify-center w-12 h-12";
+            }
+        }
+
+        // --- 4. 表面積數學運算與動態標籤渲染 ---
+        function calculateSurfaceArea() {
+            let baseArea = 0, lateralArea = 0, totalArea = 0;
+            let formulaHtml = '', stepsHtml = '';
+
+            const formatNum = (n) => Math.round(n * 100) / 100;
+
+            if (activeShape === 'cube') {
+                const s = shapeParams.cube.size;
+                baseArea = s * s;
+                lateralArea = s * s * 4;
+                totalArea = s * s * 6;
+
+                formulaHtml = `
+                    <div class="flex justify-between"><span>正方形面面積 (底面) ＝ 邊長 × 邊長</span></div>
+                    <div class="flex justify-between font-bold text-slate-800"><span>總表面積 ＝ 每個面的面積 × 6 個面</span></div>
+                `;
+
+                stepsHtml = `
+                    <div>一個面的面積 ＝ <span class="text-blue-600">${s} × ${s} ＝ ${formatNum(baseArea)}</span> cm²</div>
+                    <div>總表面積 ＝ <span class="text-indigo-600">${formatNum(baseArea)} × 6</span></div>
+                `;
+            } 
+            else if (activeShape === 'prism') {
+                const w = shapeParams.prism.width;
+                const d = shapeParams.prism.depth;
+                const h = shapeParams.prism.height;
+                
+                baseArea = w * d;
+                lateralArea = 2 * (w * h + d * h);
+                totalArea = 2 * baseArea + lateralArea;
+
+                formulaHtml = `
+                    <div class="flex justify-between"><span><span class="text-blue-600">底面積</span> ＝ 長 × 寬</span></div>
+                    <div class="flex justify-between"><span><span class="text-amber-600">側面積</span> ＝ (長 × 高 ＋ 寬 × 高) × 2</span></div>
+                `;
+
+                stepsHtml = `
+                    <div>單個底面積 ＝ <span class="text-blue-600">${w} × ${d} ＝ ${formatNum(baseArea)}</span> cm²</div>
+                    <div>側面部分(前後左右) ＝ <span class="text-amber-600">2 × (${w}×${h} ＋ ${d}×${h}) ＝ ${formatNum(lateralArea)}</span> cm²</div>
+                    <div>總表面積 ＝ <span class="text-indigo-600">${formatNum(baseArea)}×2 ＋ ${formatNum(lateralArea)}</span></div>
+                `;
+            } 
+            else if (activeShape === 'triPrism') {
+                const w = shapeParams.triPrism.width; // 三角形底
+                const d = shapeParams.triPrism.depth; // 三角形高
+                const h = shapeParams.triPrism.height; // 柱體高度
+                
+                // 假設為等腰三角形。底為w，高為d。則兩等腰側邊長s
+                const s = Math.sqrt((w / 2) * (w / 2) + d * d);
+                
+                baseArea = (w * d) / 2;
+                lateralArea = w * h + 2 * s * h; // 底邊矩形面積 + 兩個斜側矩形面積
+                totalArea = 2 * baseArea + lateralArea;
+
+                formulaHtml = `
+                    <div class="flex justify-between"><span><span class="text-blue-600">底面積 (三角形)</span> ＝ 底 × 高 ÷ 2</span></div>
+                    <div class="flex justify-between"><span>等腰側邊 (s) ＝ √[(底/2)² ＋ 柱高²] ≒ ${formatNum(s)}</span></div>
+                    <div class="flex justify-between"><span><span class="text-amber-600">側面積</span> ＝ 三角底邊邊長×柱高 ＋ 2 × (等腰側邊×柱高)</span></div>
+                `;
+
+                stepsHtml = `
+                    <div>單個三角形底面 ＝ <span class="text-blue-600">${w} × ${d} ÷ 2 ＝ ${formatNum(baseArea)}</span> cm²</div>
+                    <div>三個側面矩形 ＝ <span class="text-amber-600">${w}×${h} ＋ 2 × (${formatNum(s)}×${h}) ＝ ${formatNum(lateralArea)}</span> cm²</div>
+                    <div>總表面積 ＝ <span class="text-indigo-600">${formatNum(baseArea)}×2 ＋ ${formatNum(lateralArea)}</span></div>
+                `;
+            } 
+            else if (activeShape === 'cylinder') {
+                const r = shapeParams.cylinder.radius;
+                const h = shapeParams.cylinder.height;
+                const pi = 3.14; // 以國小教材為標準，採用 3.14 方便算式理解
+                
+                baseArea = r * r * pi;
+                const circumference = 2 * pi * r;
+                lateralArea = circumference * h;
+                totalArea = 2 * baseArea + lateralArea;
+
+                formulaHtml = `
+                    <div class="flex justify-between"><span><span class="text-blue-600">底面積 (圓形)</span> ＝ 半徑 × 半徑 × 3.14</span></div>
+                    <div class="flex justify-between"><span>圓周長 (展開側長) ＝ 直徑 × 3.14 ＝ 2 × 半徑 × 3.14</span></div>
+                    <div class="flex justify-between"><span><span class="text-amber-600">側面積 (長方形)</span> ＝ 圓周長 × 柱體高度</span></div>
+                `;
+
+                stepsHtml = `
+                    <div>單個底面積 ＝ <span class="text-blue-600">${r} × ${r} × 3.14 ＝ ${formatNum(baseArea)}</span> cm²</div>
+                    <div>展開側長(寬) ＝ ${2 * r} × 3.14 ＝ ${formatNum(circumference)} cm</div>
+                    <div>側面積 ＝ <span class="text-amber-600">${formatNum(circumference)} × ${h} ＝ ${formatNum(lateralArea)}</span> cm²</div>
+                    <div>總表面積 ＝ <span class="text-indigo-600">${formatNum(baseArea)}×2 ＋ ${formatNum(lateralArea)}</span></div>
+                `;
+            } 
+            else if (activeShape === 'pyramid') {
+                const w = shapeParams.pyramid.width; // 底方形邊長
+                const h = shapeParams.pyramid.height; // 側面三角形高
+                
+                baseArea = w * w;
+                const singleTriangleArea = (w * h) / 2;
+                lateralArea = 4 * singleTriangleArea;
+                totalArea = baseArea + lateralArea;
+
+                formulaHtml = `
+                    <div class="flex justify-between"><span><span class="text-blue-600">底面積 (正方形)</span> ＝ 邊長 × 邊長</span></div>
+                    <div class="flex justify-between"><span>單個側面面積 ＝ 三角形底 × 斜高 ÷ 2</span></div>
+                    <div class="flex justify-between"><span><span class="text-amber-600">側面積</span> ＝ 四個側面三角形面積 ＝ 單面面積 × 4</span></div>
+                `;
+
+                stepsHtml = `
+                    <div>底面正方形 ＝ <span class="text-blue-600">${w} × ${w} ＝ ${formatNum(baseArea)}</span> cm²</div>
+                    <div>單個側面 ＝ ${w} × ${h} ÷ 2 ＝ ${formatNum(singleTriangleArea)} cm²</div>
+                    <div>四個側面 ＝ <span class="text-amber-600">${formatNum(singleTriangleArea)} × 4 ＝ ${formatNum(lateralArea)}</span> cm²</div>
+                    <div>總表面積 ＝ <span class="text-indigo-600">${formatNum(baseArea)} ＋ ${formatNum(lateralArea)}</span></div>
+                `;
+            }
+
+            // 更新 UI
+            document.getElementById('formulaDetails').innerHTML = formulaHtml;
+            document.getElementById('calculationSteps').innerHTML = stepsHtml;
+            document.getElementById('totalSurfaceArea').innerHTML = `表面積 ＝ <span class="text-indigo-600">${formatNum(totalArea)}</span> cm²`;
+        }
+
+        // --- 5. 構建並繪製 3D 摺疊展開動畫幾何結構 ---
+        function rebuildShape() {
+            // 清空舊的模型面
+            while(meshGroup.children.length > 0) {
+                const obj = meshGroup.children[0];
+                meshGroup.remove(obj);
+            }
+
+            // 實作各形狀的折疊物理
+            if (activeShape === 'cube') {
+                buildCubeNet();
+            } else if (activeShape === 'prism') {
+                buildPrismNet();
+            } else if (activeShape === 'triPrism') {
+                buildTriPrismNet();
+            } else if (activeShape === 'cylinder') {
+                buildCylinderNet();
+            } else if (activeShape === 'pyramid') {
+                buildPyramidNet();
+            }
+
+            // 同步計算表面積與標籤
+            calculateSurfaceArea();
+            updateLabelOverlays();
+        }
+
+        // 創建一個雙面渲染的有外框的 3D 面板
+        function createFace(width, height, colorHex, opacity = 0.75) {
+            const geom = new THREE.PlaneGeometry(width, height);
+            
+            // 使用半透明雙面渲染材質，讓學生容易看清內外前後空間
+            const mat = new THREE.MeshPhongMaterial({
+                color: colorHex,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: opacity,
+                shininess: 60,
+                specular: 0x222222
+            });
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            // 添加外框黑線，凸顯立體邊框結構，這對展開圖極其重要
+            const edges = new THREE.EdgesGeometry(geom);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 2 }));
+            mesh.add(line);
+
+            return mesh;
+        }
+
+        // 創建一個帶有外邊框的 2D/3D 三角形面
+        function createTriangleFace(w, d, isPositiveY, colorHex, opacity = 0.8) {
+            const shape = new THREE.Shape();
+            if (isPositiveY) {
+                shape.moveTo(-w/2, 0);
+                shape.lineTo(w/2, 0);
+                shape.lineTo(0, d);
+                shape.lineTo(-w/2, 0);
+            } else {
+                shape.moveTo(-w/2, 0);
+                shape.lineTo(w/2, 0);
+                shape.lineTo(0, -d);
+                shape.lineTo(-w/2, 0);
+            }
+            
+            const geom = new THREE.ShapeGeometry(shape);
+            const mat = new THREE.MeshPhongMaterial({
+                color: colorHex,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: opacity,
+                shininess: 60,
+                specular: 0x222222
+            });
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            const edges = new THREE.EdgesGeometry(geom);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 2 }));
+            mesh.add(line);
+            return mesh;
+        }
+
+        function buildCubeNet() {
+            const s = shapeParams.cube.size;
+            const p = foldProgress;
+            const rad90 = Math.PI / 2;
+
+            // 定義基底材質色：底面(Blue: 0x3b82f6), 側面(Orange: 0xf59e0b)
+            const baseColor = 0x3b82f6;
+            const sideColor = 0xf59e0b;
+
+            // 1. 底面 (Base) - 固定於底部
+            const faceBottom = createFace(s, s, baseColor);
+            faceBottom.rotation.x = -rad90;
+            meshGroup.add(faceBottom);
+
+            // 2. 前側面 (Front Face) - 以z=-s/2為軸向上摺疊
+            const frontHinge = new THREE.Group();
+            frontHinge.position.set(0, 0, -s/2);
+            const frontMesh = createFace(s, s, sideColor);
+            frontMesh.position.set(0, s/2, 0); // 朝上平移半個邊長
+            frontHinge.add(frontMesh);
+            frontHinge.rotation.x = -(1 - p) * rad90; // 折疊旋轉
+            meshGroup.add(frontHinge);
+
+            // 3. 後側面 (Back Face) - 以z=s/2為軸向上摺疊
+            const backHinge = new THREE.Group();
+            backHinge.position.set(0, 0, s/2);
+            const backMesh = createFace(s, s, sideColor);
+            backMesh.position.set(0, s/2, 0);
+            backHinge.add(backMesh);
+            backHinge.rotation.x = (1 - p) * rad90;
+            meshGroup.add(backHinge);
+
+            // 4. 左側面 (Left Face) - 以x=-s/2為軸向上摺疊
+            const leftHinge = new THREE.Group();
+            leftHinge.position.set(-s/2, 0, 0);
+            const leftMesh = createFace(s, s, sideColor);
+            leftMesh.position.set(0, s/2, 0);
+            leftMesh.rotation.y = rad90;
+            leftHinge.add(leftMesh);
+            leftHinge.rotation.z = (1 - p) * rad90;
+            meshGroup.add(leftHinge);
+
+            // 5. 右側面 (Right Face) - 以x=s/2為軸向上摺疊
+            const rightHinge = new THREE.Group();
+            rightHinge.position.set(s/2, 0, 0);
+            const rightMesh = createFace(s, s, sideColor);
+            rightMesh.position.set(0, s/2, 0);
+            rightMesh.rotation.y = -rad90;
+            rightHinge.add(rightMesh);
+            rightHinge.rotation.z = -(1 - p) * rad90;
+            meshGroup.add(rightHinge);
+
+            // 6. 頂面 (Top Face - 藍色) - 連接在後側面頂端，產生多段式摺疊
+            const topHinge = new THREE.Group();
+            topHinge.position.set(0, s, 0); // 放在後側面的頂部
+            const topMesh = createFace(s, s, baseColor);
+            topMesh.position.set(0, 0, -s/2); // 修正：將蓋子的中心往鉸鏈前方偏置，對應真正的旋轉半徑
+            topMesh.rotation.x = -rad90; // 與後側面夾角
+            topHinge.add(topMesh);
+            topHinge.rotation.x = (1 - p) * rad90; // 修正：將其旋轉方向轉為正向，與 backHinge 連動後可完美累加成 180 度平躺
+
+            // 由於 topHinge 是後側面 hinge 的子系，我們可以直接加在 backHinge 內
+            backHinge.add(topHinge);
+        }
+
+        function buildPrismNet() {
+            const w = shapeParams.prism.width;
+            const d = shapeParams.prism.depth;
+            const h = shapeParams.prism.height;
+            const p = foldProgress;
+            const rad90 = Math.PI / 2;
+
+            const baseColor = 0x3b82f6;
+            const sideColor = 0xf59e0b;
+
+            // 1. 底面 (Base - 藍色)
+            const faceBottom = createFace(w, d, baseColor);
+            faceBottom.rotation.x = -rad90;
+            meshGroup.add(faceBottom);
+
+            // 2. 前側面 (Front Face - 橘色) - 寬w 高h
+            const frontHinge = new THREE.Group();
+            frontHinge.position.set(0, 0, -d/2);
+            const frontMesh = createFace(w, h, sideColor);
+            frontMesh.position.set(0, h/2, 0);
+            frontHinge.add(frontMesh);
+            frontHinge.rotation.x = -(1 - p) * rad90;
+            meshGroup.add(frontHinge);
+
+            // 3. 後側面 (Back Face - 橘色) - 寬w 高h
+            const backHinge = new THREE.Group();
+            backHinge.position.set(0, 0, d/2);
+            const backMesh = createFace(w, h, sideColor);
+            backMesh.position.set(0, h/2, 0);
+            backHinge.add(backMesh);
+            backHinge.rotation.x = (1 - p) * rad90;
+            meshGroup.add(backHinge);
+
+            // 4. 左側面 (Left Face - 橘色) - 深d 高h
+            const leftHinge = new THREE.Group();
+            leftHinge.position.set(-w/2, 0, 0);
+            const leftMesh = createFace(d, h, sideColor);
+            leftMesh.position.set(0, h/2, 0);
+            leftMesh.rotation.y = rad90;
+            leftHinge.add(leftMesh);
+            leftHinge.rotation.z = (1 - p) * rad90;
+            meshGroup.add(leftHinge);
+
+            // 5. 右側面 (Right Face - 橘色) - 深d 高h
+            const rightHinge = new THREE.Group();
+            rightHinge.position.set(w/2, 0, 0);
+            const rightMesh = createFace(d, h, sideColor);
+            rightMesh.position.set(0, h/2, 0);
+            rightMesh.rotation.y = -rad90;
+            rightHinge.add(rightMesh);
+            rightHinge.rotation.z = -(1 - p) * rad90;
+            meshGroup.add(rightHinge);
+
+            // 6. 頂面 (Top Face - 藍色) - 寬w 深d，連接在後側頂部
+            const topHinge = new THREE.Group();
+            topHinge.position.set(0, h, 0);
+            const topMesh = createFace(w, d, baseColor);
+            topMesh.position.set(0, 0, -d/2); // 修正：偏置 d/2 至旋轉鉸鏈處
+            topMesh.rotation.x = -rad90;
+            topHinge.add(topMesh);
+            topHinge.rotation.x = (1 - p) * rad90; // 修正旋轉疊加方向，確保摺疊運動時，蓋子軌跡完美吻合
+            backHinge.add(topHinge);
+        }
+
+        function buildTriPrismNet() {
+            const w = shapeParams.triPrism.width; // 三角形底
+            const d = shapeParams.triPrism.depth; // 三角形高
+            const h = shapeParams.triPrism.height; // 柱體高度
+            const p = foldProgress;
+            const rad90 = Math.PI / 2;
+
+            const baseColor = 0x3b82f6;
+            const sideColor = 0xf59e0b;
+
+            // 計算等腰三角形側邊 s 
+            const s = Math.sqrt((w / 2) * (w / 2) + d * d);
+            
+            // 摺疊角：利用三角函數求底邊與等腰斜邊之間的折角 (180度 - 底角)
+            const theta = Math.atan2(d, w / 2);
+            const foldAngle = Math.PI - theta;
+
+            // 1. 中間側面矩形面 (寬為 w, 柱高為 h) - 作為平面基準，躺在地面
+            const faceMid = createFace(w, h, sideColor);
+            faceMid.rotation.x = -rad90;
+            meshGroup.add(faceMid);
+
+            // 2. 左側等腰斜板側板 (寬 s, 高 h) - 鉸接在左邊界
+            const leftHinge = new THREE.Group();
+            leftHinge.position.set(-w/2, 0, 0);
+            const leftMesh = createFace(s, h, sideColor);
+            leftMesh.position.set(-s/2, 0, 0);
+            leftHinge.add(leftMesh);
+            leftHinge.rotation.y = p * foldAngle; // 向上折起
+            faceMid.add(leftHinge);
+
+            // 3. 右側等腰斜板側板 (寬 s, 高 h) - 鉸接在右邊界
+            const rightHinge = new THREE.Group();
+            rightHinge.position.set(w/2, 0, 0);
+            const rightMesh = createFace(s, h, sideColor);
+            rightMesh.position.set(s/2, 0, 0);
+            rightHinge.add(rightMesh);
+            rightHinge.rotation.y = -p * foldAngle; // 向上折起
+            faceMid.add(rightHinge);
+
+            // 4. 前後底面三角形面 (藍色)
+            // 前三角形：鉸接在 y = -h/2，向外延伸到 -y
+            const frontTriHinge = new THREE.Group();
+            frontTriHinge.position.set(0, -h/2, 0);
+            const frontTriMesh = createTriangleFace(w, d, false, baseColor);
+            frontTriHinge.add(frontTriMesh);
+            frontTriHinge.rotation.x = -p * rad90; // 向上折起 90 度
+            faceMid.add(frontTriHinge);
+
+            // 後三角形：鉸接在 y = h/2，向外延伸到 +y
+            const backTriHinge = new THREE.Group();
+            backTriHinge.position.set(0, h/2, 0);
+            const backTriMesh = createTriangleFace(w, d, true, baseColor);
+            backTriHinge.add(backTriMesh);
+            backTriHinge.rotation.x = p * rad90; // 向上折起 90 度
+            faceMid.add(backTriHinge);
+        }
+
+        function buildCylinderNet() {
+            const r = shapeParams.cylinder.radius;
+            const h = shapeParams.cylinder.height;
+            const p = foldProgress;
+            const rad90 = Math.PI / 2;
+
+            const baseColor = 0x3b82f6;
+            const sideColor = 0xf59e0b;
+
+            // 1. 側邊包裹面板 (採用多段網格模擬從平面捲曲成圓筒)
+            const segments = 48;
+            const sideGeom = new THREE.PlaneGeometry(2 * Math.PI * r, h, segments, 2);
+            
+            const posAttr = sideGeom.attributes.position;
+            const originalX = [];
+            for(let i=0; i<posAttr.count; i++) {
+                originalX.push(posAttr.getX(i));
+            }
+
+            // 根據折疊進度 p，將平躺的頂點動態映射至圓弧曲面上
+            for(let i=0; i<posAttr.count; i++) {
+                const ox = originalX[i];
+                const oy = posAttr.getY(i);
+                if (p < 0.01) {
+                    // 完全扁平狀態
+                    posAttr.setXYZ(i, ox, oy, 0);
+                } else {
+                    // 動態計算當前的彎曲半徑與弧度
+                    const curR = r / p; 
+                    const theta = ox / curR;
+                    const nx = curR * Math.sin(theta);
+                    const nz = curR * (1 - Math.cos(theta));
+                    posAttr.setXYZ(i, nx, oy, nz);
+                }
+            }
+            sideGeom.computeVertexNormals();
+
+            const sideMat = new THREE.MeshPhongMaterial({
+                color: sideColor,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.75,
+                shininess: 60
+            });
+            const sideMesh = new THREE.Mesh(sideGeom, sideMat);
+            // 將側面板平鋪在 XZ 地平面上
+            sideMesh.rotation.x = -rad90;
+
+            // 邊緣黑線框，強調邊界
+            const edges = new THREE.EdgesGeometry(sideGeom);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 2 }));
+            sideMesh.add(line);
+            meshGroup.add(sideMesh);
+
+            // 2. 上下圓底面蓋子
+            const circleGeom = new THREE.CircleGeometry(r, 48);
+            const circleMat = new THREE.MeshPhongMaterial({
+                color: baseColor,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.8,
+                shininess: 60
+            });
+            const circleEdges = new THREE.EdgesGeometry(circleGeom);
+            const circleLineMat = new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 2 });
+
+            // 上圓形蓋：鉸接於 Z = h/2。折疊時圍繞鉸鏈在 Z 軸的切線向上翻起
+            const topLidGroup = new THREE.Group();
+            topLidGroup.position.set(0, 0, h/2); // 設定鉸鏈原點
+            
+            const topCircleMesh = new THREE.Mesh(circleGeom, circleMat);
+            const topCircleLine = new THREE.LineSegments(circleEdges, circleLineMat);
+            topCircleMesh.add(topCircleLine);
+            topCircleMesh.position.set(0, 0, r); // 平放時圓心在延伸 r 的位置
+            topCircleMesh.rotation.x = -rad90; // 初始平躺在地平面
+
+            topLidGroup.add(topCircleMesh);
+            topLidGroup.rotation.x = -p * rad90; // 隨著折疊進度旋轉 90 度立起貼合
+            meshGroup.add(topLidGroup);
+
+            // 下圓形蓋：鉸接於 Z = -h/2。折疊時以相反方向翻起貼合
+            const bottomLidGroup = new THREE.Group();
+            bottomLidGroup.position.set(0, 0, -h/2); // 設定鉸鏈原點
+            
+            const bottomCircleMesh = new THREE.Mesh(circleGeom, circleMat);
+            const bottomCircleLine = new THREE.LineSegments(circleEdges, circleLineMat);
+            bottomCircleMesh.add(bottomCircleLine);
+            bottomCircleMesh.position.set(0, 0, -r); // 平放時圓心往反方向延伸 r
+            bottomCircleMesh.rotation.x = -rad90; // 初始平躺在地平面
+
+            bottomLidGroup.add(bottomCircleMesh);
+            bottomLidGroup.rotation.x = p * rad90; // 隨著折疊進度旋轉 90 度立起貼合
+            meshGroup.add(bottomLidGroup);
+        }
+
+        function buildPyramidNet() {
+            const w = shapeParams.pyramid.width; // 正方形底邊
+            const h = shapeParams.pyramid.height; // 三角形側面高
+            const p = foldProgress;
+            const rad90 = Math.PI / 2;
+
+            const baseColor = 0x3b82f6;
+            const sideColor = 0xf59e0b;
+
+            // 計算精確的二面角 (Dihedral Angle)，限制比值防止除以零或無效值
+            const ratio = Math.min(0.999, w / (2 * h));
+            const foldAngle = Math.PI - Math.acos(ratio);
+
+            // 1. 底面正方形 (藍色)，躺在地面上
+            const faceBottom = createFace(w, w, baseColor);
+            faceBottom.rotation.x = -rad90;
+            meshGroup.add(faceBottom);
+
+            // 2. 前側三角形 - 鉸接在 y = -w/2，向外延伸至 -y
+            const frontHinge = new THREE.Group();
+            frontHinge.position.set(0, -w/2, 0);
+            const frontMesh = createTriangleFace(w, h, false, sideColor);
+            frontHinge.add(frontMesh);
+            frontHinge.rotation.x = -p * foldAngle; // 向內合起
+            faceBottom.add(frontHinge);
+
+            // 3. 後側三角形 - 鉸接在 y = w/2，向外延伸至 +y
+            const backHinge = new THREE.Group();
+            backHinge.position.set(0, w/2, 0);
+            const backMesh = createTriangleFace(w, h, true, sideColor);
+            backHinge.add(backMesh);
+            backHinge.rotation.x = p * foldAngle; // 向內合起
+            faceBottom.add(backHinge);
+
+            // 4. 左側三角形 - 鉸接在 x = -w/2，向外延伸至 -x
+            const leftHinge = new THREE.Group();
+            leftHinge.position.set(-w/2, 0, 0);
+            const leftMesh = createTriangleFace(w, h, false, sideColor);
+            leftMesh.rotation.z = -rad90; // 旋轉使其指向左側 (-x)
+            leftHinge.add(leftMesh);
+            leftHinge.rotation.y = p * foldAngle; // 向內合起
+            faceBottom.add(leftHinge);
+
+            // 5. 右側三角形 - 鉸接在 x = w/2，向外延伸至 +x
+            const rightHinge = new THREE.Group();
+            rightHinge.position.set(w/2, 0, 0);
+            const rightMesh = createTriangleFace(w, h, false, sideColor);
+            rightMesh.rotation.z = rad90; // 旋轉使其指向右側 (+x)
+            rightHinge.add(rightMesh);
+            rightHinge.rotation.y = -p * foldAngle; // 向內合起
+            faceBottom.add(rightHinge);
+        }
+
+        // --- 6. 3D 空間坐標投射至 HTML 文字標籤 (精美尺寸標註) ---
+        function updateLabelOverlays() {
+            const overlay = document.getElementById('canvasOverlayLabels');
+            overlay.innerHTML = ''; // 清空
+
+            const labels = [];
+            
+            if (activeShape === 'cube') {
+                const s = shapeParams.cube.size;
+                labels.push({ pos: new THREE.Vector3(s/2, -1.4, 0), text: `邊長: ${s}cm` });
+            } 
+            else if (activeShape === 'prism') {
+                const w = shapeParams.prism.width;
+                const d = shapeParams.prism.depth;
+                const h = shapeParams.prism.height;
+                // 在適當幾何邊緣標記
+                labels.push({ pos: new THREE.Vector3(0, -1.4, d/2 + 0.3), text: `長: ${w}cm` });
+                labels.push({ pos: new THREE.Vector3(w/2 + 0.3, -1.4, 0), text: `寬: ${d}cm` });
+                if (foldProgress > 0.3) {
+                    labels.push({ pos: new THREE.Vector3(w/2 + 0.2, h/2 - 1.5, d/2), text: `高: ${h}cm` });
+                }
+            } 
+            else if (activeShape === 'triPrism') {
+                const w = shapeParams.triPrism.width;
+                const d = shapeParams.triPrism.depth;
+                const h = shapeParams.triPrism.height;
+                labels.push({ pos: new THREE.Vector3(0, -1.4, h/2), text: `底: ${w}cm` });
+                labels.push({ pos: new THREE.Vector3(-0.2, d/2 - 1.5, h/2), text: `三角形高: ${d}cm` });
+                if (foldProgress > 0.3) {
+                    labels.push({ pos: new THREE.Vector3(w/2 + 0.3, -1.4, 0), text: `柱高: ${h}cm` });
+                }
+            } 
+            else if (activeShape === 'cylinder') {
+                const r = shapeParams.cylinder.radius;
+                const h = shapeParams.cylinder.height;
+                labels.push({ pos: new THREE.Vector3(r/2, -1.4, 0), text: `半徑: ${r}cm` });
+                if (foldProgress > 0.3) {
+                    labels.push({ pos: new THREE.Vector3(r + 0.3, h/2 - 1.5, 0), text: `柱高: ${h}cm` });
+                }
+            } 
+            else if (activeShape === 'pyramid') {
+                const w = shapeParams.pyramid.width;
+                const h = shapeParams.pyramid.height;
+                labels.push({ pos: new THREE.Vector3(0, -1.4, w/2 + 0.3), text: `底邊: ${w}cm` });
+                labels.push({ pos: new THREE.Vector3(0, h/2 - 1.5, w/2 + 0.2), text: `斜高: ${h}cm` });
+            }
+
+            // 投影運算
+            labels.forEach(item => {
+                const screenPos = toScreenPosition(item.pos);
+                if (screenPos.visible) {
+                    const el = document.createElement('div');
+                    el.className = "absolute bg-slate-900/90 text-white text-[10px] md:text-xs px-2 py-0.5 rounded shadow font-bold tracking-wide pointer-events-none transform -translate-x-1/2 -translate-y-1/2 border border-slate-700/50";
+                    el.style.left = `${screenPos.x}px`;
+                    el.style.top = `${screenPos.y}px`;
+                    el.innerText = item.text;
+                    overlay.appendChild(el);
+                }
+            });
+        }
+
+        // 轉換 3D 空間點到螢幕 pixel 位置
+        function toScreenPosition(vector) {
+            const canvas = renderer.domElement;
+            const tempV = vector.clone();
+            tempV.project(camera);
+
+            const x = (tempV.x * .5 + .5) * canvas.clientWidth;
+            const y = (tempV.y * -.5 + .5) * canvas.clientHeight;
+
+            return {
+                x: x,
+                y: y,
+                visible: tempV.z <= 1 && x >= 0 && x <= canvas.clientWidth && y >= 0 && y <= canvas.clientHeight
+            };
+        }
+
+        // --- 7. 動態主渲染迴圈與摺疊動畫運作 ---
+        let lastTime = 0;
+        let frameCount = 0;
+        let fpsTimer = 0;
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+            
+            // FPS 計數器
+            frameCount++;
+            if (time - fpsTimer > 1000) {
+                document.getElementById('canvasStats').innerText = `FPS: ${Math.round(frameCount * 1000 / (time - fpsTimer))}`;
+                frameCount = 0;
+                fpsTimer = time;
+            }
+
+            // 自動折疊展開運作
+            if (isAutoFolding) {
+                foldProgress += autoFoldDirection;
+                if (foldProgress <= 0.0) {
+                    foldProgress = 0.0;
+                    autoFoldDirection = 0.01; // 反轉朝向摺疊
+                } else if (foldProgress >= 1.0) {
+                    foldProgress = 1.0;
+                    autoFoldDirection = -0.01; // 反轉朝向展開
+                }
+                
+                // 同步更新 UI 滑桿與形狀
+                document.getElementById('unfoldSlider').value = foldProgress * 100;
+                document.getElementById('unfoldProgressText').innerText = `${Math.round(foldProgress * 100)}% ${foldProgress == 1 ? '(立體)' : foldProgress == 0 ? '(完全展開)' : '(折疊中)'}`;
+                rebuildShape();
+            }
+
+            // 旋轉與相機更新
+            controls.update();
+            renderer.render(scene, camera);
+            
+            // 每幀跟隨相機更新畫面上的尺寸 HTML 標籤位置
+            updateLabelOverlays();
+        }
+
+        // --- 8. 課堂練習挑戰邏輯 ---
+        function generateNewQuiz() {
+            // 隨機選題
+            const randomIndex = Math.floor(Math.random() * quizList.length);
+            currentQuiz = quizList[randomIndex];
+
+            // 渲染題目
+            document.getElementById('quizQuestionText').innerHTML = currentQuiz.q;
+            document.getElementById('quizAnswerInput').value = '';
+            
+            // 隱藏回饋與「帶入數據」按鈕
+            const feedback = document.getElementById('quizFeedback');
+            feedback.className = "hidden";
+            
+            const btnVis = document.getElementById('btnLoadQuizToVis');
+            btnVis.className = "hidden";
+        }
+
+        function checkQuizAnswer() {
+            const inputVal = parseFloat(document.getElementById('quizAnswerInput').value);
+            const feedback = document.getElementById('quizFeedback');
+            const btnVis = document.getElementById('btnLoadQuizToVis');
+
+            if (isNaN(inputVal)) {
+                feedback.className = "p-3 rounded-xl text-sm font-bold bg-amber-100 text-amber-800 flex items-center space-x-2 mt-3";
+                feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>請輸入你的計算數值後再檢查喔！</span>`;
+                return;
+            }
+
+            // 容差範圍 0.1 (因圓周率取3.14有小數誤差)
+            const diff = Math.abs(inputVal - currentQuiz.a);
+            if (diff < 0.2) {
+                feedback.className = "p-3 rounded-xl text-sm font-bold bg-emerald-100 text-emerald-800 flex items-center space-x-2 mt-3 shadow-sm";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check text-lg"></i> <span>太棒了！計算完全正確！你的幾何概念非常好！👏</span>`;
+                
+                // 答對時提供「代入 3D 模擬」按鈕，讓學生看見自己解出的形狀
+                btnVis.className = "bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition-all block";
+            } else {
+                feedback.className = "p-3 rounded-xl text-sm font-bold bg-rose-100 text-rose-800 flex items-center space-x-2 mt-3 shadow-sm";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark text-lg"></i> <span>再想想看，可以利用左側的「實時算式解析」看看哪裡算錯囉！加油！</span>`;
+                
+                // 答錯也提供，引導學生透過 3D 來理解
+                btnVis.className = "bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition-all block";
+            }
+        }
+
+        function loadQuizToVisualizer() {
+            // 停止自動播放
+            if (isAutoFolding) {
+                toggleAutoUnfold();
+            }
+
+            // 切換至對應題目圖形與載入題目數值
+            selectShape(currentQuiz.shape);
+
+            if (currentQuiz.shape === 'cube') {
+                shapeParams.cube.size = currentQuiz.size;
+            } else if (currentQuiz.shape === 'prism') {
+                shapeParams.prism.width = currentQuiz.width;
+                shapeParams.prism.height = currentQuiz.height;
+                shapeParams.prism.depth = currentQuiz.depth;
+            } else if (currentQuiz.shape === 'triPrism') {
+                shapeParams.triPrism.width = currentQuiz.width;
+                shapeParams.triPrism.height = currentQuiz.height;
+                shapeParams.triPrism.depth = currentQuiz.depth;
+            } else if (currentQuiz.shape === 'cylinder') {
+                shapeParams.cylinder.radius = currentQuiz.radius;
+                shapeParams.cylinder.height = currentQuiz.height;
+            } else if (currentQuiz.shape === 'pyramid') {
+                shapeParams.pyramid.width = currentQuiz.width;
+                shapeParams.pyramid.height = currentQuiz.height;
+            }
+
+            // 刷新控制項數值
+            renderControls();
+            
+            // 起始為完全立體，讓學生看得更清晰
+            setUnfoldProgress(100);
+
+            // 更新 3D
+            rebuildShape();
+            
+            // 重置相機
+            resetCamera();
+        }
+    </script>
+</body>
+</html>
